@@ -1,0 +1,37 @@
+service: demo-lambda
+
+frameworkVersion: '2'
+
+custom:
+  bucket: 
+    dev: demo-bucket
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  stage: dev
+  region: eu-west-2
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "ec2:CreateNetworkInterface"
+        - "ec2:DescribeNetworkInterfaces"
+        - "ec2:DetachNetworkInterface"
+        - "ec2:DeleteNetworkInterface"
+      Resource: "*"
+  tags:
+    Env: ${opt:stage, self:provider.stage}
+
+
+functions:
+  uploads:
+    handler: handler.handleUploads
+    environment:
+      PROJECT_ENVIRONMENT: ${opt:stage, self:provider.stage}
+    events:
+      - s3:
+          bucket: ${self:custom.bucket.${opt:stage, self:provider.stage}}
+          event: s3:ObjectCreated:*
+          existing: true
+
